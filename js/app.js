@@ -1,6 +1,11 @@
 'use strict';
 
+// Общий с сайтом школы ключ: сайт создаёт профиль при входе и показывает прогресс на главной
 var STORAGE_KEY = 'bloop-cabinet-v1';
+
+// Сайт школы. На GitHub Pages это соседний репозиторий kids-ai-courses на том же домене,
+// при локальном запуске кабинет лежит в подпапке сайта — тогда сайт на уровень выше.
+var SITE_URL = location.hostname.endsWith('github.io') ? '/kids-ai-courses/' : '../';
 var REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 var $ = function (sel, root) { return (root || document).querySelector(sel); };
@@ -26,14 +31,37 @@ var app = {
   quiz: null,
 
   init: function () {
+    $$('[data-site-link]').forEach(function (a) { a.href = SITE_URL; });
+
+    // ?start=<курс> — пришли с сайта по кнопке «Play now»
+    var params = new URLSearchParams(location.search);
+    this.pendingStart = params.get('start');
+    if (this.pendingStart) history.replaceState(null, '', location.pathname + location.hash);
+
     this.state = this.load();
     this.bind();
     if (this.state) {
       this.render();
+      this.runPendingStart();
     } else {
       this.state = Game.newState();
       this.render();
       this.openWelcome();
+    }
+  },
+
+  runPendingStart: function () {
+    var id = this.pendingStart;
+    this.pendingStart = null;
+    var course = id && Game.findCourse(id);
+    if (!course) return;
+    var cs = Game.courseStatus(this.state, course);
+    if (cs.nextLesson !== null) {
+      this.startLesson(course.id, cs.nextLesson);
+    } else {
+      var card = document.getElementById('course-' + course.id);
+      if (card) card.scrollIntoView({ block: 'center' });
+      this.toast('🎓', course.title + ' is complete!', 'Replay any lesson to earn more stars.');
     }
   },
 
@@ -123,11 +151,12 @@ var app = {
         : '<button class="btn btn--primary" type="button" data-course="' + c.id + '" data-lesson="' + cs.nextLesson + '">' +
           (cs.passed ? 'Continue' : 'Start') + '</button>';
 
-      return '<article class="course' + (cs.done ? ' is-complete' : '') + '">' +
+      var forAge = s.age && c.ageKey === s.age && !cs.done ? '<span class="course__for-you">⭐ For your age</span>' : '';
+      return '<article class="course' + (cs.done ? ' is-complete' : '') + '" id="course-' + c.id + '">' +
         '<div class="course__head">' +
           '<div class="course__thumb" style="--thumb:' + c.thumb + '">' + self.bobik(cs.done ? 'victory' : c.pose, c.palette) + '</div>' +
           '<div class="course__info">' +
-            '<span class="course__age">' + c.age + '</span>' +
+            '<span class="course__age">' + c.age + '</span>' + forAge +
             '<h3>' + esc(c.title) + '</h3>' +
             '<div class="course__meta"><span>' + cs.passed + '/' + cs.total + ' lessons</span><span>⭐ ' + cs.stars + '/' + cs.maxStars + '</span></div>' +
             '<div class="bar"><div class="bar__fill" style="width:' + Math.round(cs.progress * 100) + '%"></div></div>' +
@@ -195,7 +224,8 @@ var app = {
   openWelcome: function () {
     var dlg = $('#welcome');
     var form = $('#welcome-form');
-    form.elements.name.value = this.state.lessons && Object.keys(this.state.lessons).length ? this.state.name : '';
+    form.elements.name.value = this.load() ? this.state.name : '';
+    form.elements.age.value = this.state.age || '';
     $('#welcome-bobik').innerHTML = this.bobik('hello');
     if (!dlg.open) dlg.showModal();
   },
@@ -207,10 +237,18 @@ var app = {
     if ($('#welcome').open) $('#welcome-bobik').innerHTML = this.bobik('delight');
   },
 
+  // Сервера пока нет: прогресс живёт только в этом браузере, поэтому выход его стирает
+  logout: function () {
+    if (!window.confirm('Log out? Your progress is saved only in this browser, so it will be erased.')) return;
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* нечего стирать */ }
+    location.href = SITE_URL;
+  },
+
   resetProgress: function () {
     if (!window.confirm('Reset all XP, stars and badges? This cannot be undone.')) return;
     var keep = this.state;
     this.state = Game.newState(keep.name, keep.palette);
+    this.state.age = keep.age;
     this.save();
     this.render();
     this.toast('🔄', 'Progress reset', 'A fresh start with Bobik!');
@@ -467,17 +505,28 @@ var app = {
       e.preventDefault();
       var name = e.target.elements.name.value.trim();
       if (!name) return;
+      var isNew = !self.load();
       self.state.name = name;
+      if (e.target.elements.age.value) self.state.age = e.target.elements.age.value;
       self.save();
       self.render();
       $('#welcome').close();
-      self.toast('👋', 'Nice to meet you, ' + name + '!', 'Start your first lesson below.');
+      if (isNew && !self.pendingStart) self.toast('👋', 'Nice to meet you, ' + name + '!', 'Start your first lesson below.');
+      self.runPendingStart();
     });
-    $('#welcome').addEventListener('cancel', function () { self.save(); });
+    $('#welcome').addEventListener('cancel', function () { self.save(); self.runPendingStart(); });
 
     $('#profile-chip').addEventListener('click', function () { self.openWelcome(); });
     $('#rename-btn').addEventListener('click', function () { self.openWelcome(); });
     $('#reset-btn').addEventListener('click', function () { self.resetProgress(); });
+    $('#logout-btn').addEventListener('click', function () { self.logout(); });
+
+    // Вернулись в кабинет кнопкой «назад» — перечитываем данные (имя могли поменять на сайте)
+    window.addEventListener('pageshow', function (e) {
+      if (!e.persisted) return;
+      var saved = self.load();
+      if (saved) { self.state = saved; self.render(); }
+    });
 
     $('#hero-bobik').addEventListener('click', function () {
       var moods = ['joy', 'surprise', 'delight', 'wink', 'victory'];

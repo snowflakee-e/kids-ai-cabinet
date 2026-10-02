@@ -42,7 +42,7 @@
             <div class="topbar__links">
                 <a href="#courses">Courses</a>
                 <a href="#badges">Badges</a>
-                <a href="https://snowflakee-e.github.io/kids-ai-courses/">School site ↗</a>
+                <a href="https://snowflakee-e.github.io/kids-ai-courses/" data-site-link>← School site</a>
             </div>
             <button class="chip-profile" id="profile-chip" type="button" aria-label="Profile settings">
                 <span class="chip-profile__lvl" id="chip-level">Lv 1</span>
@@ -133,6 +133,7 @@
                 </div>
                 <div class="settings__actions">
                     <button class="btn btn--white btn--sm" type="button" id="rename-btn">Change name</button>
+                    <button class="btn btn--white btn--sm" type="button" id="logout-btn">Log out</button>
                     <button class="btn btn--ghost btn--sm" type="button" id="reset-btn">Reset progress</button>
                 </div>
             </section>
@@ -140,7 +141,7 @@
     </main>
 
     <footer class="footer">
-        <p>Bloop AI School · Progress is saved in this browser.</p>
+        <p><a href="https://snowflakee-e.github.io/kids-ai-courses/" data-site-link>Bloop AI School</a> · Progress is saved in this browser.</p>
     </footer>
 
     <!-- Знакомство -->
@@ -152,6 +153,15 @@
             <label class="field">
                 <span>Your name</span>
                 <input name="name" type="text" maxlength="20" autocomplete="given-name" required placeholder="For example, Emma">
+            </label>
+            <label class="field">
+                <span>How old are you?</span>
+                <select name="age">
+                    <option value="">Choose your age</option>
+                    <option value="6-8">6–8 years</option>
+                    <option value="9-11">9–11 years</option>
+                    <option value="12-14">12–14 years</option>
+                </select>
             </label>
             <p class="field-label">Pick my color</p>
             <div class="swatches" id="welcome-swatches" role="radiogroup" aria-label="Bobik's color">

@@ -4,7 +4,7 @@
 // порядок перемешивается при показе), explain — объяснение после ответа.
 var COURSES = [
   {
-    id: 'hello-ai', title: 'Hello, AI!', age: 'Ages 6–8', palette: 'mint', pose: 'hello', thumb: '#DDF6EF',
+    id: 'hello-ai', title: 'Hello, AI!', ageKey: '6-8', age: 'Ages 6–8', palette: 'mint', pose: 'hello', thumb: '#DDF6EF',
     lessons: [
       { id: 'hello-1', title: 'What is AI?', questions: [
         { q: 'Which of these can use AI?', options: ['A voice assistant on a phone', 'A wooden chair', 'A pencil'],
@@ -39,7 +39,7 @@ var COURSES = [
     ]
   },
   {
-    id: 'prompts', title: 'Magic Prompts', age: 'Ages 9–11', palette: 'sky', pose: 'idea', thumb: '#E1F0FF',
+    id: 'prompts', title: 'Magic Prompts', ageKey: '9-11', age: 'Ages 9–11', palette: 'sky', pose: 'idea', thumb: '#E1F0FF',
     lessons: [
       { id: 'prompts-1', title: 'What is a prompt?', questions: [
         { q: 'A prompt is…', options: ['The instruction you give to AI', 'A type of robot', 'A computer virus'],
@@ -74,7 +74,7 @@ var COURSES = [
     ]
   },
   {
-    id: 'ai-art', title: 'AI Artist', age: 'Ages 9–11', palette: 'lav', pose: 'wink', thumb: '#EEE9FF',
+    id: 'ai-art', title: 'AI Artist', ageKey: '9-11', age: 'Ages 9–11', palette: 'lav', pose: 'wink', thumb: '#EEE9FF',
     lessons: [
       { id: 'art-1', title: 'Pictures from words', questions: [
         { q: 'Image AI turns ___ into pictures.', options: ['Text descriptions', 'Sounds of rain', 'Smells'],
