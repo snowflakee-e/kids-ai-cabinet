@@ -130,11 +130,12 @@ button { font: inherit; color: inherit; }
 .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); }
 .logo__bot { width: 42px; height: 42px; }
 .logo__bot svg { display: block; width: 100%; height: 100%; }
-.logo__text { font-family: var(--font-display); font-weight: 800; font-size: 20px; }
+.logo__text { font-family: var(--font-display); font-weight: 800; font-size: 20px; white-space: nowrap; }
 .logo__text b { color: var(--blue); }
 
 .topbar__links { display: flex; gap: 4px; margin-left: auto; }
 .topbar__links a {
+    white-space: nowrap;
     padding: 10px 14px;
     border-radius: 14px;
     font-weight: 800;
@@ -683,6 +684,11 @@ button { font: inherit; color: inherit; }
 }
 
 /* ---------- Адаптив ---------- */
+/* Планшет в портрете: в шапке остаётся только ссылка на сайт школы */
+@media (max-width: 1000px) {
+    .topbar__links a:not(:last-child) { display: none; }
+}
+
 @media (max-width: 1100px) {
     .layout { grid-template-columns: 1fr; }
     .layout__side { position: static; grid-template-columns: repeat(2, 1fr); margin-top: 24px; }
