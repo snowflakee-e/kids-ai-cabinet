@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Cabinet — Bloop AI School</title>
+    <meta name="description" content="Personal cabinet of Bloop AI School: lessons with quizzes, XP, levels, stars, streaks and badges.">
+    <meta name="theme-color" content="#9ED3FF">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏆</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800&family=Rubik:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <svg class="sprite" aria-hidden="true">
+        <symbol id="cloud" viewBox="0 0 200 110">
+            <g class="cloud-shade" transform="translate(8 8)">
+                <circle cx="55" cy="68" r="30"/><circle cx="98" cy="48" r="40"/><circle cx="142" cy="62" r="31"/>
+                <rect x="22" y="66" width="160" height="34" rx="17"/>
+            </g>
+            <g class="cloud-body">
+                <circle cx="55" cy="68" r="30"/><circle cx="98" cy="48" r="40"/><circle cx="142" cy="62" r="31"/>
+                <rect x="22" y="66" width="160" height="34" rx="17"/>
+            </g>
+        </symbol>
+    </svg>
+
+    <header class="sky">
+        <div class="sky__bg" aria-hidden="true">
+            <svg class="cloud c1"><use href="#cloud"/></svg>
+            <svg class="cloud c2"><use href="#cloud"/></svg>
+            <svg class="cloud c3"><use href="#cloud"/></svg>
+            <svg class="cloud c4"><use href="#cloud"/></svg>
+        </div>
+
+        <nav class="topbar" aria-label="Cabinet menu">
+            <a class="logo" href="#top">
+                <span class="logo__bot" id="logo-bobik"></span>
+                <span class="logo__text">Bloop <b>Cabinet</b></span>
+            </a>
+            <div class="topbar__links">
+                <a href="#courses">Courses</a>
+                <a href="#badges">Badges</a>
+                <a href="https://snowflakee-e.github.io/kids-ai-courses/">School site ↗</a>
+            </div>
+            <button class="chip-profile" id="profile-chip" type="button" aria-label="Profile settings">
+                <span class="chip-profile__lvl" id="chip-level">Lv 1</span>
+                <span id="chip-name">Explorer</span>
+            </button>
+        </nav>
+
+        <div class="hero" id="top">
+            <button class="hero__bot" id="hero-bobik" type="button" aria-label="Pet Bobik"></button>
+            <div class="hero__info">
+                <p class="hero__title-small" id="level-title">Curious Cadet</p>
+                <h1 id="hello">Hi, Explorer!</h1>
+                <div class="xpbar" role="progressbar" aria-label="Progress to next level" aria-valuemin="0" aria-valuemax="100" id="xpbar">
+                    <span class="xpbar__lvl" id="level-badge">1</span>
+                    <div class="xpbar__track"><div class="xpbar__fill" id="xp-fill"></div></div>
+                    <span class="xpbar__text" id="xp-text">0 / 100 XP</span>
+                </div>
+                <ul class="hero__chips">
+                    <li title="Days in a row"><span aria-hidden="true">🔥</span> <b id="chip-streak">0</b> day streak</li>
+                    <li title="Stars collected"><span aria-hidden="true">⭐</span> <b id="chip-stars">0</b> stars</li>
+                    <li title="Courses completed"><span aria-hidden="true">🎓</span> <b id="chip-courses">0</b> courses done</li>
+                </ul>
+            </div>
+        </div>
+
+        <svg class="sky__edge" viewBox="0 0 1440 100" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0 100V64Q80 22 170 60Q250 18 340 58Q430 24 520 62Q610 18 700 58Q790 22 880 62Q970 20 1060 58Q1150 24 1240 62Q1330 22 1440 56V100Z"/>
+        </svg>
+    </header>
+
+    <main class="layout">
+        <div class="layout__main">
+            <section class="stats" id="stats" aria-label="My stats"></section>
+
+            <section id="courses">
+                <div class="section-head">
+                    <h2>My courses</h2>
+                    <p>Pass a lesson to unlock the next one. 3 stars = every answer right!</p>
+                </div>
+                <div class="courses" id="course-list"></div>
+            </section>
+
+            <section id="badges">
+                <div class="section-head">
+                    <h2>Badges <span class="count" id="badge-count"></span></h2>
+                    <p>Collect them all by learning every day and answering carefully.</p>
+                </div>
+                <div class="badges" id="badge-list"></div>
+            </section>
+        </div>
+
+        <aside class="layout__side">
+            <section class="card daily">
+                <h2>Daily goal</h2>
+                <div class="ring">
+                    <svg viewBox="0 0 120 120" aria-hidden="true">
+                        <circle class="ring__track" cx="60" cy="60" r="50"/>
+                        <circle class="ring__fill" id="ring-fill" cx="60" cy="60" r="50"/>
+                    </svg>
+                    <div class="ring__label"><b id="daily-xp">0</b><span id="daily-goal">/ 50 XP</span></div>
+                </div>
+                <p class="daily__note" id="daily-note">Earn 50 XP today!</p>
+            </section>
+
+            <section class="card">
+                <h2>This week</h2>
+                <div class="week" id="week" role="img" aria-label="XP earned in the last 7 days"></div>
+            </section>
+
+            <section class="card how">
+                <h2>How to earn XP</h2>
+                <ul>
+                    <li><span>Correct answer</span><b>+10</b></li>
+                    <li><span>3+ correct in a row</span><b>+5 each</b></li>
+                    <li><span>Lesson passed</span><b>+20</b></li>
+                    <li><span>Perfect lesson</span><b>+30</b></li>
+                    <li><span>Course completed</span><b>+100</b></li>
+                </ul>
+            </section>
+
+            <section class="card settings" id="settings">
+                <h2>Bobik's color</h2>
+                <div class="swatches" id="swatches" role="radiogroup" aria-label="Bobik's color">
+                    <button type="button" role="radio" class="swatch swatch--mint" data-palette="mint" aria-label="Mint"></button>
+                    <button type="button" role="radio" class="swatch swatch--sky" data-palette="sky" aria-label="Sky"></button>
+                    <button type="button" role="radio" class="swatch swatch--lav" data-palette="lav" aria-label="Lavender"></button>
+                    <button type="button" role="radio" class="swatch swatch--peach" data-palette="peach" aria-label="Peach"></button>
+                </div>
+                <div class="settings__actions">
+                    <button class="btn btn--white btn--sm" type="button" id="rename-btn">Change name</button>
+                    <button class="btn btn--ghost btn--sm" type="button" id="reset-btn">Reset progress</button>
+                </div>
+            </section>
+        </aside>
+    </main>
+
+    <footer class="footer">
+        <p>Bloop AI School · Progress is saved in this browser.</p>
+    </footer>
+
+    <!-- Знакомство -->
+    <dialog class="modal" id="welcome" aria-labelledby="welcome-title">
+        <form class="modal__box" id="welcome-form" method="dialog">
+            <div class="modal__bot" id="welcome-bobik"></div>
+            <h2 id="welcome-title">Welcome, explorer!</h2>
+            <p>I'm Bobik. What should I call you?</p>
+            <label class="field">
+                <span>Your name</span>
+                <input name="name" type="text" maxlength="20" autocomplete="given-name" required placeholder="For example, Emma">
+            </label>
+            <p class="field-label">Pick my color</p>
+            <div class="swatches" id="welcome-swatches" role="radiogroup" aria-label="Bobik's color">
+                <button type="button" role="radio" class="swatch swatch--mint" data-palette="mint" aria-label="Mint"></button>
+                <button type="button" role="radio" class="swatch swatch--sky" data-palette="sky" aria-label="Sky"></button>
+                <button type="button" role="radio" class="swatch swatch--lav" data-palette="lav" aria-label="Lavender"></button>
+                <button type="button" role="radio" class="swatch swatch--peach" data-palette="peach" aria-label="Peach"></button>
+            </div>
+            <button class="btn btn--primary btn--block" type="submit">Let's go! 🚀</button>
+        </form>
+    </dialog>
+
+    <!-- Урок-квиз -->
+    <dialog class="quiz" id="quiz" aria-labelledby="quiz-title">
+        <div class="quiz__inner" id="quiz-inner"></div>
+    </dialog>
+
+    <div class="toasts" id="toasts" aria-live="polite"></div>
+    <div class="confetti" id="confetti" aria-hidden="true"></div>
+
+    <script src="js/bobik.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
