@@ -116,3 +116,35 @@ test('week XP covers 7 days ending today', () => {
   assert.equal(w[0].xp, 10);
   assert.equal(w[6].xp, 40);
 });
+
+// ---------- Курсы по возрасту из профиля ----------
+const D = require('../js/data.js');
+
+test('age groups match the school site', () => {
+  assert.deepEqual(D.AGE_GROUPS.map(g => g.id), ['6-8', '9-11', '12-14', '14-17']);
+});
+
+test('cabinet shows only courses whose whole age range fits the profile age', () => {
+  const ids = age => D.coursesForAge(age).map(c => c.id);
+  assert.deepEqual(ids('6-8'), ['hello-ai']);
+  assert.deepEqual(ids('9-11'), ['prompts', 'ai-art']);
+  assert.deepEqual(ids('12-14'), []);
+  assert.deepEqual(ids(''), []);
+  assert.deepEqual(ids(undefined), []);
+});
+
+test('every cabinet course fits one age group', () => {
+  for (const c of D.COURSES) {
+    assert.ok(D.AGE_GROUPS.some(g => c.ages[0] >= g.min && c.ages[1] <= g.max), c.id);
+  }
+});
+
+test('AI Champion needs every course for your age, not for all ages', () => {
+  const champion = D.ACHIEVEMENTS.find(a => a.id === 'champion');
+  let state = G.newState('Ann');
+  state.age = '6-8';
+  assert.equal(champion.check(state), false);
+  state = passCourse(state, ALL, '2026-10-01').state; // hello-ai — единственный курс для 6–8
+  state.age = '6-8';
+  assert.equal(champion.check(state), true);
+});

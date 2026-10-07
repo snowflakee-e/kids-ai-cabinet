@@ -4,7 +4,7 @@
 // порядок перемешивается при показе), explain — объяснение после ответа.
 var COURSES = [
   {
-    id: 'hello-ai', title: 'Hello, AI!', ageKey: '6-8', age: 'Ages 6–8', palette: 'mint', pose: 'hello', thumb: '#DDF6EF',
+    id: 'hello-ai', title: 'Hello, AI!', ages: [6, 7], age: 'Ages 6–7', palette: 'mint', pose: 'hello', thumb: '#DDF6EF',
     lessons: [
       { id: 'hello-1', title: 'What is AI?', questions: [
         { q: 'Which of these can use AI?', options: ['A voice assistant on a phone', 'A wooden chair', 'A pencil'],
@@ -39,7 +39,7 @@ var COURSES = [
     ]
   },
   {
-    id: 'prompts', title: 'Magic Prompts', ageKey: '9-11', age: 'Ages 9–11', palette: 'sky', pose: 'idea', thumb: '#E1F0FF',
+    id: 'prompts', title: 'Magic Prompts', ages: [9, 11], age: 'Ages 9–11', palette: 'sky', pose: 'idea', thumb: '#E1F0FF',
     lessons: [
       { id: 'prompts-1', title: 'What is a prompt?', questions: [
         { q: 'A prompt is…', options: ['The instruction you give to AI', 'A type of robot', 'A computer virus'],
@@ -74,7 +74,7 @@ var COURSES = [
     ]
   },
   {
-    id: 'ai-art', title: 'AI Artist', ageKey: '9-11', age: 'Ages 9–11', palette: 'lav', pose: 'wink', thumb: '#EEE9FF',
+    id: 'ai-art', title: 'AI Artist', ages: [9, 11], age: 'Ages 9–11', palette: 'lav', pose: 'wink', thumb: '#EEE9FF',
     lessons: [
       { id: 'art-1', title: 'Pictures from words', questions: [
         { q: 'Image AI turns ___ into pictures.', options: ['Text descriptions', 'Sounds of rain', 'Smells'],
@@ -109,6 +109,28 @@ var COURSES = [
     ]
   }
 ];
+
+// Возрастные группы — те же, что на сайте школы (catalog.js в kids-ai-courses): меняются вместе.
+// more — куда вести, если для группы в кабинете пока нет курсов (путь от корня сайта школы).
+var AGE_GROUPS = [
+  { id: '6-8',   min: 6,  max: 8,  name: 'Explorers' },
+  { id: '9-11',  min: 9,  max: 11, name: 'Inventors' },
+  { id: '12-14', min: 12, max: 14, name: 'Creators',
+    more: { text: 'Courses for ages 12–14 start with a free trial lesson. See them on the school site.', link: 'See my courses', href: '#/courses' } },
+  { id: '14-17', min: 14, max: 17, name: 'Pros',
+    more: { text: 'Your course is AI Trail: short hands-on lessons on using AI for studying and projects.', link: 'Open AI Trail', href: 'ai-trail/' } }
+];
+
+function findAgeGroup(id) {
+  return AGE_GROUPS.filter(function (g) { return g.id === id; })[0] || null;
+}
+
+// Курсы для возраста из профиля: только те, чей возраст целиком внутри группы. Без возраста — пусто.
+function coursesForAge(ageId) {
+  var g = findAgeGroup(ageId);
+  if (!g) return [];
+  return COURSES.filter(function (c) { return c.ages[0] >= g.min && c.ages[1] <= g.max; });
+}
 
 // Уровни: сколько XP нужно для каждого уровня и его название
 var LEVELS = [
@@ -146,9 +168,17 @@ var ACHIEVEMENTS = [
   { id: 'stars-15',    icon: '⭐', title: 'Star Collector', desc: 'Collect 15 stars',                    check: function (s, st) { return st.stars >= 15; } },
   { id: 'habit-hero',  icon: '📅', title: 'Habit Hero',     desc: 'Learn 3 days in a row',               check: function (s) { return s.bestStreak >= 3; } },
   { id: 'xp-500',      icon: '💎', title: 'XP Hunter',      desc: 'Earn 500 XP',                         check: function (s) { return s.xp >= 500; } },
-  { id: 'champion',    icon: '🏆', title: 'AI Champion',    desc: 'Complete every course',               check: function (s, st) { return st.coursesDone >= COURSES.length; } }
+  { id: 'champion',    icon: '🏆', title: 'AI Champion',    desc: 'Complete every course for your age',  check: function (s) {
+    var mine = coursesForAge(s.age);
+    return mine.length > 0 && mine.every(function (c) {
+      return c.lessons.every(function (l) { return s.lessons[l.id] && s.lessons[l.id].stars > 0; });
+    });
+  } }
 ];
 
 if (typeof module !== 'undefined') {
-  module.exports = { COURSES: COURSES, LEVELS: LEVELS, XP_RULES: XP_RULES, DAILY_GOAL: DAILY_GOAL, ACHIEVEMENTS: ACHIEVEMENTS };
+  module.exports = {
+    COURSES: COURSES, AGE_GROUPS: AGE_GROUPS, findAgeGroup: findAgeGroup, coursesForAge: coursesForAge,
+    LEVELS: LEVELS, XP_RULES: XP_RULES, DAILY_GOAL: DAILY_GOAL, ACHIEVEMENTS: ACHIEVEMENTS
+  };
 }

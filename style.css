@@ -289,6 +289,10 @@ button { font: inherit; color: inherit; }
 /* ---------- Курсы ---------- */
 .courses { display: grid; gap: 20px; }
 .course { padding: 22px; border-radius: var(--radius); background: #fff; box-shadow: var(--shadow); }
+/* Для возраста нет курсов в кабинете или возраст не выбран */
+.course-empty { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px 20px; padding: 22px; border-radius: var(--radius); background: var(--sky-soft); }
+.course-empty p { margin: 0; max-width: 36em; font-weight: 700; }
+.link-btn { margin-left: 6px; padding: 4px 2px; border: 0; background: none; color: var(--blue-deep); font: inherit; font-weight: 800; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .course.is-complete { box-shadow: 0 0 0 3px var(--sun), var(--shadow); }
 .course__head { display: flex; align-items: center; gap: 18px; }
 .course__thumb {
