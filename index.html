@@ -79,8 +79,9 @@
 
             <section id="courses">
                 <div class="section-head">
-                    <h2>My courses</h2>
-                    <p>Pass a lesson to unlock the next one. 3 stars = every answer right!</p>
+                    <h2>My courses <span class="count" id="courses-age"></span></h2>
+                    <p>Pass a lesson to unlock the next one. 3 stars = every answer right!
+                        <button class="link-btn" type="button" id="courses-age-btn" data-open-welcome hidden>Change my age</button></p>
                 </div>
                 <div class="courses" id="course-list"></div>
             </section>
@@ -156,11 +157,9 @@
             </label>
             <label class="field">
                 <span>How old are you?</span>
-                <select name="age">
-                    <option value="">Choose your age</option>
-                    <option value="6-8">6–8 years</option>
-                    <option value="9-11">9–11 years</option>
-                    <option value="12-14">12–14 years</option>
+                <!-- группы возраста добавляет app.js из AGE_GROUPS (data.js): те же, что на сайте школы -->
+                <select name="age" required>
+                    <option value="" disabled>Choose your age</option>
                 </select>
             </label>
             <p class="field-label">Pick my color</p>

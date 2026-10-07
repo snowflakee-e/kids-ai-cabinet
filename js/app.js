@@ -38,11 +38,19 @@ var app = {
     this.pendingStart = params.get('start');
     if (this.pendingStart) history.replaceState(null, '', location.pathname + location.hash);
 
+    $('#welcome-form').elements.age.insertAdjacentHTML('beforeend', AGE_GROUPS.map(function (g) {
+      return '<option value="' + g.id + '">' + g.min + '–' + g.max + ' years</option>';
+    }).join(''));
+
     this.state = this.load();
     this.bind();
-    if (this.state) {
+    if (this.state && findAgeGroup(this.state.age)) {
       this.render();
       this.runPendingStart();
+    } else if (this.state) {
+      // Профиль без возраста (старый): курсы показываются по возрасту, поэтому сначала спрашиваем его
+      this.render();
+      this.openWelcome();
     } else {
       this.state = Game.newState();
       this.render();
@@ -55,6 +63,10 @@ var app = {
     this.pendingStart = null;
     var course = id && Game.findCourse(id);
     if (!course) return;
+    if (coursesForAge(this.state.age).indexOf(course) === -1) {
+      this.toast('🔒', course.title + ' is for ' + course.age.toLowerCase(), 'Here are the courses for your age.');
+      return;
+    }
     var cs = Game.courseStatus(this.state, course);
     if (cs.nextLesson !== null) {
       this.startLesson(course.id, cs.nextLesson);
@@ -103,7 +115,9 @@ var app = {
     $('#xp-text').textContent = lvl.to ? (s.xp + ' / ' + lvl.to + ' XP') : (s.xp + ' XP · max level');
     $('#chip-streak').textContent = Game.currentStreak(s, this.today());
     $('#chip-stars').textContent = st.stars;
-    $('#chip-courses').textContent = st.coursesDone + '/' + COURSES.length;
+    var mine = coursesForAge(s.age);
+    $('#chip-courses').textContent = mine.filter(function (c) { return Game.courseStatus(s, c).done; }).length + '/' + mine.length;
+    $('#chip-courses').parentNode.hidden = !mine.length; // для возраста нет курсов в кабинете — счётчик не нужен
 
     this.renderStats(st);
     this.renderCourses();
@@ -127,9 +141,24 @@ var app = {
     }).join('');
   },
 
+  // Только курсы для возраста из профиля — тот же возраст видит сайт школы
   renderCourses: function () {
     var self = this, s = this.state;
-    $('#course-list').innerHTML = COURSES.map(function (c) {
+    var group = findAgeGroup(s.age);
+    var mine = coursesForAge(s.age);
+    $('#courses-age').textContent = group ? 'Ages ' + group.min + '–' + group.max : '';
+    $('#courses-age-btn').hidden = !group;
+
+    if (!group) {
+      $('#course-list').innerHTML = '<div class="course-empty"><p>Tell Bobik how old you are, and you’ll see the courses made for your age.</p>' +
+        '<button class="btn btn--primary" type="button" data-open-welcome>Choose my age</button></div>';
+      return;
+    }
+    var more = group.more
+      ? '<div class="course-empty"><p>' + group.more.text + '</p><a class="btn btn--primary" href="' + SITE_URL + group.more.href + '">' + group.more.link + '</a></div>'
+      : '';
+
+    $('#course-list').innerHTML = more + mine.map(function (c) {
       var cs = Game.courseStatus(s, c);
       var nodes = c.lessons.map(function (l, i) {
         var rec = s.lessons[l.id];
@@ -151,12 +180,11 @@ var app = {
         : '<button class="btn btn--primary" type="button" data-course="' + c.id + '" data-lesson="' + cs.nextLesson + '">' +
           (cs.passed ? 'Continue' : 'Start') + '</button>';
 
-      var forAge = s.age && c.ageKey === s.age && !cs.done ? '<span class="course__for-you">⭐ For your age</span>' : '';
       return '<article class="course' + (cs.done ? ' is-complete' : '') + '" id="course-' + c.id + '">' +
         '<div class="course__head">' +
           '<div class="course__thumb" style="--thumb:' + c.thumb + '">' + self.bobik(cs.done ? 'victory' : c.pose, c.palette) + '</div>' +
           '<div class="course__info">' +
-            '<span class="course__age">' + c.age + '</span>' + forAge +
+            '<span class="course__age">' + c.age + '</span>' +
             '<h3>' + esc(c.title) + '</h3>' +
             '<div class="course__meta"><span>' + cs.passed + '/' + cs.total + ' lessons</span><span>⭐ ' + cs.stars + '/' + cs.maxStars + '</span></div>' +
             '<div class="bar"><div class="bar__fill" style="width:' + Math.round(cs.progress * 100) + '%"></div></div>' +
@@ -225,7 +253,10 @@ var app = {
     var dlg = $('#welcome');
     var form = $('#welcome-form');
     form.elements.name.value = this.load() ? this.state.name : '';
-    form.elements.age.value = this.state.age || '';
+    // Пришли с сайта по кнопке курса — подставляем возраст этого курса
+    var pending = !this.state.age && this.pendingStart && Game.findCourse(this.pendingStart);
+    var pendingGroup = pending && AGE_GROUPS.filter(function (g) { return pending.ages[0] >= g.min && pending.ages[1] <= g.max; })[0];
+    form.elements.age.value = findAgeGroup(this.state.age) ? this.state.age : (pendingGroup ? pendingGroup.id : '');
     $('#welcome-bobik').innerHTML = this.bobik('hello');
     if (!dlg.open) dlg.showModal();
   },
@@ -471,6 +502,8 @@ var app = {
       var start = e.target.closest('[data-course][data-lesson]');
       if (start && !start.disabled) self.startLesson(start.dataset.course, Number(start.dataset.lesson));
 
+      if (e.target.closest('[data-open-welcome]')) self.openWelcome();
+
       var sw = e.target.closest('.swatch');
       if (sw) self.setPalette(sw.dataset.palette);
     });
@@ -507,7 +540,7 @@ var app = {
       if (!name) return;
       var isNew = !self.load();
       self.state.name = name;
-      if (e.target.elements.age.value) self.state.age = e.target.elements.age.value;
+      self.state.age = e.target.elements.age.value;
       self.save();
       self.render();
       $('#welcome').close();
