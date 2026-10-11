@@ -8,6 +8,9 @@ var STORAGE_KEY = 'bloop-cabinet-v1';
 var SITE_URL = location.hostname.endsWith('github.io') ? '/kids-ai-courses/' : '../';
 var REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+// Course cards cycle three theme tokens that stay distinct on every age channel (same as the parent site)
+var THUMB = ['acc', 'rb-body', 'rb-joint'];
+
 var $ = function (sel, root) { return (root || document).querySelector(sel); };
 var $$ = function (sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); };
 
@@ -32,6 +35,7 @@ var app = {
 
   init: function () {
     $$('[data-site-link]').forEach(function (a) { a.href = SITE_URL; });
+    $('#shapes').innerHTML = Theme.shapes();
 
     // ?start=<курс> — пришли с сайта по кнопке «Play now»
     var params = new URLSearchParams(location.search);
@@ -92,7 +96,7 @@ var app = {
   },
 
   bobik: function (pose, palette) {
-    return renderBobik(pose, PALETTES[palette || this.state.palette]);
+    return bob(STATES[pose] || STATES.neutral, PALETTES[palette || this.state.palette] || null);
   },
 
   today: function () { return Game.dayKey(); },
@@ -108,7 +112,10 @@ var app = {
     $('#chip-name').textContent = s.name;
     $('#chip-level').textContent = 'Lv ' + lvl.level;
     $('#hello').textContent = 'Hi, ' + s.name + '!';
-    $('#level-title').textContent = 'Level ' + lvl.level + ' · ' + lvl.title;
+    $('#level-title').textContent = lvl.title;
+    var group = findAgeGroup(s.age);
+    $('#channel-tag').textContent = group ? group.name + ' channel, ages ' + group.min + '-' + group.max : 'Pick your age to open your channel';
+    if (!$('#welcome').open) Theme.go(Theme.ageOf(s.age));
     $('#level-badge').textContent = lvl.level;
     $('#xp-fill').style.width = Math.round(lvl.progress * 100) + '%';
     $('#xpbar').setAttribute('aria-valuenow', Math.round(lvl.progress * 100));
@@ -130,14 +137,13 @@ var app = {
   renderStats: function (st) {
     var s = this.state;
     var tiles = [
-      ['💎', s.xp, 'total XP'],
-      ['🎯', s.answered ? Math.round(st.accuracy * 100) + '%' : '—', 'correct answers'],
-      ['📚', st.lessonsDone, 'lessons passed'],
-      ['🔥', s.bestCombo, 'best answer streak']
+      [s.xp, 'total XP'],
+      [s.answered ? Math.round(st.accuracy * 100) + '%' : '—', 'correct answers'],
+      [st.lessonsDone, 'lessons passed'],
+      [s.bestCombo, 'best answer streak']
     ];
     $('#stats').innerHTML = tiles.map(function (t) {
-      return '<div class="stat"><span class="stat__icon" aria-hidden="true">' + t[0] + '</span>' +
-        '<b class="stat__value">' + t[1] + '</b><span class="stat__label">' + t[2] + '</span></div>';
+      return '<div class="stat"><b class="stat__value">' + t[0] + '</b><span class="stat__label">' + t[1] + '</span></div>';
     }).join('');
   },
 
@@ -158,7 +164,7 @@ var app = {
       ? '<div class="course-empty"><p>' + group.more.text + '</p><a class="btn btn--primary" href="' + SITE_URL + group.more.href + '">' + group.more.link + '</a></div>'
       : '';
 
-    $('#course-list').innerHTML = more + mine.map(function (c) {
+    $('#course-list').innerHTML = more + mine.map(function (c, k) {
       var cs = Game.courseStatus(s, c);
       var nodes = c.lessons.map(function (l, i) {
         var rec = s.lessons[l.id];
@@ -176,13 +182,13 @@ var app = {
       }).join('');
 
       var action = cs.done
-        ? '<span class="course__done">🎓 Completed</span>'
+        ? '<span class="course__done">Completed</span>'
         : '<button class="btn btn--primary" type="button" data-course="' + c.id + '" data-lesson="' + cs.nextLesson + '">' +
           (cs.passed ? 'Continue' : 'Start') + '</button>';
 
       return '<article class="course' + (cs.done ? ' is-complete' : '') + '" id="course-' + c.id + '">' +
         '<div class="course__head">' +
-          '<div class="course__thumb" style="--thumb:' + c.thumb + '">' + self.bobik(cs.done ? 'victory' : c.pose, c.palette) + '</div>' +
+          '<div class="course__thumb" style="--C:var(--' + THUMB[k % 3] + ')">' + self.bobik(cs.done ? 'victory' : c.pose, 'auto') + '</div>' +
           '<div class="course__info">' +
             '<span class="course__age">' + c.age + '</span>' +
             '<h3>' + esc(c.title) + '</h3>' +
@@ -259,6 +265,7 @@ var app = {
     form.elements.age.value = findAgeGroup(this.state.age) ? this.state.age : (pendingGroup ? pendingGroup.id : '');
     $('#welcome-bobik').innerHTML = this.bobik('hello');
     if (!dlg.open) dlg.showModal();
+    if (form.elements.age.value) Theme.go(Theme.ageOf(form.elements.age.value));
   },
 
   setPalette: function (name) {
@@ -479,7 +486,8 @@ var app = {
   confetti: function () {
     if (REDUCED_MOTION) return;
     var box = $('#quiz').open ? $('#quiz') : $('#confetti');
-    var colors = ['#FFD36E', '#7AD3C1', '#F59DB0', '#8EC5FF', '#B7A6F2', '#FFB28E'];
+    var css = getComputedStyle(document.documentElement);
+    var colors = ['--acc', '--s1', '--s2', '--rb-body', '--rb-joint', '--bg'].map(function (v) { return css.getPropertyValue(v).trim() || '#FFCE3A'; });
     for (var i = 0; i < 60; i++) {
       var p = document.createElement('i');
       p.className = 'confetti__piece';
@@ -548,6 +556,8 @@ var app = {
       self.runPendingStart();
     });
     $('#welcome').addEventListener('cancel', function () { self.save(); self.runPendingStart(); });
+    $('#welcome').addEventListener('close', function () { Theme.go(Theme.ageOf(self.state.age)); });
+    $('#welcome-form').elements.age.addEventListener('change', function () { Theme.go(Theme.ageOf(this.value)); });
 
     $('#profile-chip').addEventListener('click', function () { self.openWelcome(); });
     $('#rename-btn').addEventListener('click', function () { self.openWelcome(); });
